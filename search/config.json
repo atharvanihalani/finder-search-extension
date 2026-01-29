@@ -1,0 +1,61 @@
+{
+  "_comment": "Smart Finder Search Configuration - Edit this file to customize your search behavior",
+
+  "include_directories": [
+    "~/Documents",
+    "~/Downloads"
+  ],
+
+  "exclude_patterns": [
+    "*/site-packages/*",
+    "*/.venv/*",
+    "*/venv/*",
+    "*/node_modules/*",
+    "*/__pycache__/*",
+    "*.app/*",
+    "*/Library/*",
+    "*/.Trash/*",
+    "*/.git/*",
+    "*/.tox/*",
+    "*/.mypy_cache/*",
+    "*/.pytest_cache/*",
+    "*/.ruff_cache/*",
+    "*/.cache/*",
+    "*/Caches/*",
+    "*/.eggs/*",
+    "*/*.egg-info/*",
+    "*/build/*",
+    "*/dist/*",
+    "*/.next/*",
+    "*/.nuxt/*",
+    "*/coverage/*",
+    "*/.coverage/*",
+    "*/.idea/*",
+    "*/.vscode/*",
+    "*/recordings/*"
+  ],
+
+  "exclude_filenames": [
+    "meta.json",
+    "package-lock.json",
+    "yarn.lock",
+    "pnpm-lock.yaml",
+    "Cargo.lock",
+    "Gemfile.lock",
+    "poetry.lock",
+    ".DS_Store",
+    "Thumbs.db",
+    ".gitignore",
+    ".gitattributes",
+    ".eslintrc*",
+    ".prettierrc*",
+    "tsconfig.json",
+    "*.pyc",
+    "*.pyo",
+    "*.log",
+    "*.tmp",
+    "*.temp",
+    "*.swp",
+    "*.swo"
+  ]
+}

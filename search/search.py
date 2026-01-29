@@ -95,17 +95,71 @@ def calculate_recency_score(mtime, now):
         return 1.0 - (age_days / 30)
 
 
-def rank_results(files, relevance_weight=0.6, recency_weight=0.4):
+def calculate_name_match_score(path, query):
     """
-    Rank results combining mdfind order (relevance) with recency.
+    Returns score 0-1 based on how well query matches filename or parent folders.
+
+    Scoring:
+    - Exact filename match (without extension): 1.0
+    - Filename starts with query: 0.9
+    - Query is substring of filename: 0.7
+    - Parent folder exact match: 0.6
+    - Parent folder contains query: 0.4
+    - No match: 0.0
+
+    All comparisons are case-insensitive.
+    """
+    query_lower = query.lower().strip()
+    if not query_lower:
+        return 0.0
+
+    filename = os.path.basename(path)
+    filename_lower = filename.lower()
+    name_without_ext = os.path.splitext(filename_lower)[0]
+
+    # Check filename matches
+    if query_lower == name_without_ext:
+        return 1.0
+    if name_without_ext.startswith(query_lower):
+        return 0.9
+    if query_lower in name_without_ext:
+        return 0.7
+
+    # Check parent folder matches
+    parent_path = os.path.dirname(path)
+    parent_folders = parent_path.lower().split(os.sep)
+
+    for folder in reversed(parent_folders):  # Check from closest parent up
+        if not folder:
+            continue
+        if query_lower == folder:
+            return 0.6
+        if query_lower in folder:
+            return 0.4
+
+    return 0.0
+
+
+def rank_results(files, query, config=None, base_directories=None, relevance_weight=0.3, recency_weight=0.2):
+    """
+    Rank results prioritizing filename/folder matches, with mdfind relevance and recency as tiebreakers.
+
+    Scoring breakdown:
+    - Name match (filename or parent folder): 0.5 weight (primary signal)
+    - mdfind order (content relevance): 0.3 weight
+    - Recency: 0.2 weight
     """
     if not files:
         return []
 
     now = datetime.now().timestamp()
     total = len(files)
+    name_match_weight = 1.0 - relevance_weight - recency_weight  # 0.5 by default
 
     for i, f in enumerate(files):
+        # Name match score (filename or parent folder)
+        name_match = calculate_name_match_score(f["path"], query)
+
         # Position-based relevance (earlier in mdfind results = more relevant)
         relevance_score = 1.0 - (i / total) if total > 1 else 1.0
 
@@ -113,7 +167,11 @@ def rank_results(files, relevance_weight=0.6, recency_weight=0.4):
         recency_score = calculate_recency_score(f["mtime"], now)
 
         # Combined score
-        f["score"] = relevance_weight * relevance_score + recency_weight * recency_score
+        f["score"] = (
+            name_match_weight * name_match +
+            relevance_weight * relevance_score +
+            recency_weight * recency_score
+        )
 
     # Sort by score descending
     files.sort(key=lambda x: x["score"], reverse=True)
@@ -175,7 +233,7 @@ def search(query, limit=20):
             files.append(info)
 
     # Rank results
-    ranked = rank_results(files)
+    ranked = rank_results(files, query)
 
     # Limit and clean up output
     results = []

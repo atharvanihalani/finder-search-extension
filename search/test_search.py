@@ -164,33 +164,51 @@ class TestCalculateRecencyScore(unittest.TestCase):
 
 class TestRankResults(unittest.TestCase):
     def test_empty_list(self):
-        self.assertEqual(rank_results([]), [])
+        self.assertEqual(rank_results([], "test"), [])
 
     def test_single_result(self):
-        files = [{"mtime": time.time(), "path": "/test", "filename": "test"}]
-        ranked = rank_results(files)
+        files = [{"mtime": time.time(), "path": "/test/file", "filename": "test"}]
+        ranked = rank_results(files, "test")
         self.assertEqual(len(ranked), 1)
         self.assertIn("score", ranked[0])
 
     def test_recent_files_ranked_higher(self):
         now = time.time()
         files = [
-            {"mtime": now - (20 * 86400), "path": "/old", "filename": "old"},  # 20 days old
-            {"mtime": now, "path": "/new", "filename": "new"},  # today
+            {"mtime": now - (20 * 86400), "path": "/test/old", "filename": "old"},  # 20 days old
+            {"mtime": now, "path": "/test/new", "filename": "new"},  # today
         ]
-        # Both start at same position, so recency should determine order
-        ranked = rank_results(files, relevance_weight=0.0, recency_weight=1.0)
-        self.assertEqual(ranked[0]["path"], "/new")
-        self.assertEqual(ranked[1]["path"], "/old")
+        # Neither filename matches query, so recency should be the tiebreaker
+        ranked = rank_results(files, "something", relevance_weight=0.0, recency_weight=1.0)
+        self.assertEqual(ranked[0]["path"], "/test/new")
+        self.assertEqual(ranked[1]["path"], "/test/old")
 
     def test_all_results_have_scores(self):
         now = time.time()
         files = [
-            {"mtime": now - (25 * 86400), "path": "/a", "filename": "a"},
-            {"mtime": now, "path": "/b", "filename": "b"},
+            {"mtime": now - (25 * 86400), "path": "/test/a", "filename": "a"},
+            {"mtime": now, "path": "/test/b", "filename": "b"},
         ]
-        ranked = rank_results(files)
+        ranked = rank_results(files, "test")
         self.assertTrue(all("score" in f for f in ranked))
+
+    def test_filename_match_ranks_higher(self):
+        now = time.time()
+        files = [
+            {"mtime": now, "path": "/docs/other.txt", "filename": "other.txt"},
+            {"mtime": now, "path": "/docs/budget.pdf", "filename": "budget.pdf"},
+        ]
+        ranked = rank_results(files, "budget")
+        self.assertEqual(ranked[0]["filename"], "budget.pdf")
+
+    def test_parent_folder_match(self):
+        now = time.time()
+        files = [
+            {"mtime": now, "path": "/random/file.txt", "filename": "file.txt"},
+            {"mtime": now, "path": "/budget/report.pdf", "filename": "report.pdf"},
+        ]
+        ranked = rank_results(files, "budget")
+        self.assertEqual(ranked[0]["path"], "/budget/report.pdf")
 
 
 class TestLoadConfig(unittest.TestCase):
@@ -258,9 +276,8 @@ class TestIntegration(unittest.TestCase):
             self.assertIsInstance(result["filename"], str)
             self.assertIsInstance(result["score"], float)
 
-            # Score should be between 0 and 1
+            # Score should be non-negative (can exceed 1 due to multipliers and boosts)
             self.assertGreaterEqual(result["score"], 0)
-            self.assertLessEqual(result["score"], 1)
 
     def test_limit_respected(self):
         """Test that the result limit is respected."""

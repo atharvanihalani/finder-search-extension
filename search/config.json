@@ -6,6 +6,12 @@
     "~/Downloads"
   ],
 
+  "file_type_weights": {
+    "high": [".pdf", ".docx", ".xlsx", ".md", ".txt", ".pages", ".numbers", ".key", ".doc", ".xls", ".pptx", ".ppt"],
+    "medium": [".py", ".js", ".ts", ".json", ".html", ".css", ".tsx", ".jsx", ".sh", ".yaml", ".yml"],
+    "low": [".jpg", ".jpeg", ".png", ".gif", ".mp4", ".mp3", ".mov", ".wav", ".avi", ".mkv"]
+  },
+
   "exclude_patterns": [
     "*/site-packages/*",
     "*/.venv/*",

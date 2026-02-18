@@ -2,6 +2,12 @@
 
 A Raycast extension that wraps macOS Spotlight (`mdfind`) for cleaner, scoped file search.
 
+## Before / After
+
+| Before (Spotlight) | After (Smart Finder Search) |
+|---|---|
+| ![Spotlight search showing noisy, unfiltered results](screenshots/before-spotlight.png) | ![Smart Finder Search showing clean, ranked results](screenshots/after-extension.png) |
+
 ## Features
 
 - **Scoped search**: Only searches directories you care about (Documents, Downloads)
